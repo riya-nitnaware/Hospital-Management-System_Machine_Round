@@ -1,0 +1,38 @@
+
+{% extends "base.html" %}
+{% block title %}Patient Dashboard | QuickCare{% endblock %}
+{% block content %}
+<section class="section">
+  <span class="eyebrow">PATIENT PORTAL</span>
+  <h1>Welcome, {{ current_user.name }}</h1>
+  <p class="muted">View your bookings and appointment history.</p>
+  <a class="btn btn-primary" href="{{ url_for('patient.doctors') }}">Find a Doctor</a>
+
+  <section class="card section-card">
+    <h2>My appointments</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Doctor</th><th>Specialization</th><th>Date & Time</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>{% for a in appointments %}
+        <tr>
+          <td>{{ a.doctor.user.name }}</td>
+          <td>{{ a.doctor.specialization }}</td>
+          <td>{{ a.start_time.strftime('%d %b %Y, %I:%M %p') }}</td>
+          <td><span class="status-badge status-{{ a.status|lower }}">{{ a.status }}</span></td>
+          <td>
+            {% if a.status in ['Pending','Confirmed'] %}
+              <form method="POST" action="{{ url_for('appointment.cancel', appointment_id=a.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-small btn-danger">Cancel</button>
+              </form>
+              <a class="btn btn-small btn-outline" href="{{ url_for('appointment.booking_page', doctor_id=a.doctor_id) }}">Reschedule</a>
+            {% endif %}
+            {% if a.status == 'Completed' %}
+              <a href="{{ url_for('patient.view_notes', appointment_id=a.id) }}">View notes</a>
+            {% endif %}
+          </td>
+        </tr>
+      {% else %}<tr><td colspan="5">You have no appointments yet.</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </section>
+</section>
+{% endblock %}

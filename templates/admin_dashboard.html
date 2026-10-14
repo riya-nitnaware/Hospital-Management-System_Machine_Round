@@ -1,0 +1,114 @@
+
+{% extends "base.html" %}
+{% block title %}Admin Dashboard | QuickCare{% endblock %}
+{% block content %}
+<section class="section">
+  <span class="eyebrow">ADMIN PORTAL</span>
+  <h1>Hospital overview</h1>
+
+  <div class="stats-grid">
+    {% for label, value in [
+      ('Doctors', stats.doctors),
+      ('Patients', stats.patients),
+      ('Appointments', stats.appointments),
+      ('Pending', stats.pending),
+      ('Completed', stats.completed)
+    ] %}
+      <article class="card stat-card"><span>{{ label }}</span><strong>{{ value }}</strong></article>
+    {% endfor %}
+  </div>
+
+  <section class="card section-card">
+    <h2>Add doctor</h2>
+    <form class="form-grid" method="POST" action="{{ url_for('admin.add_doctor') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div><label>Name</label><input name="name" required maxlength="100"></div>
+      <div><label>Email</label><input name="email" type="email" required></div>
+      <div><label>Temporary password</label><input name="password" type="password" minlength="8" required></div>
+      <div><label>Specialization</label><input name="specialization" required></div>
+      <div><label>Qualification</label><input name="qualification"></div>
+      <div><label>Department</label>
+        <select name="department_id" required>
+          <option value="">Select department</option>
+          {% for d in departments %}<option value="{{ d.id }}">{{ d.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div><label>Experience (years)</label><input type="number" name="experience" min="0" max="80" value="0"></div>
+      <div><label>Consultation fee</label><input type="number" name="consultation_fee" min="0" step="0.01" value="500"></div>
+      <div class="form-actions"><button class="btn btn-primary">Add Doctor</button></div>
+    </form>
+  </section>
+
+  <section class="card section-card">
+    <h2>Doctor management</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Doctor</th><th>Specialization</th><th>Department</th><th>Fee</th><th>Status</th><th>Action</th></tr></thead>
+      <tbody>
+      {% for d in doctors %}
+        <tr>
+          <td>{{ d.user.name }}<br><small>{{ d.user.email }}</small></td>
+          <td>{{ d.specialization }}</td>
+          <td>{{ d.department.name if d.department else '-' }}</td>
+          <td>₹{{ "%.2f"|format(d.consultation_fee) }}</td>
+          <td>{{ 'Active' if d.user.is_active else 'Inactive' }}</td>
+          <td>
+            <form method="POST" action="{{ url_for('admin.toggle_doctor', doctor_id=d.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-small {{ 'btn-danger' if d.user.is_active else 'btn-primary' }}">
+                {{ 'Deactivate' if d.user.is_active else 'Activate' }}
+              </button>
+            </form>
+          </td>
+        </tr>
+      {% else %}<tr><td colspan="6">No doctors added.</td></tr>{% endfor %}
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="card section-card">
+    <h2>Departments</h2>
+    <form method="POST" action="{{ url_for('admin.add_department') }}" class="form-grid">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div><label>Department name</label><input name="name" required></div>
+      <div><label>Description</label><input name="description"></div>
+      <div class="form-actions"><button class="btn btn-primary">Add Department</button></div>
+    </form>
+    <div class="tag-list">
+      {% for d in departments %}<span class="tag">{{ d.name }}</span>{% endfor %}
+    </div>
+  </section>
+
+  <section class="card section-card">
+    <h2>Registered patients</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Name</th><th>Email</th><th>Phone</th></tr></thead>
+      <tbody>{% for p in patients %}
+        <tr><td>{{ p.user.name }}</td><td>{{ p.user.email }}</td><td>{{ p.phone or '-' }}</td></tr>
+      {% else %}<tr><td colspan="3">No patients registered.</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </section>
+
+  <section class="card section-card">
+    <h2>All appointments</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Patient</th><th>Doctor</th><th>Date</th><th>Status</th><th>Update</th></tr></thead>
+      <tbody>{% for a in appointments %}
+        <tr>
+          <td>{{ a.patient.user.name }}</td><td>{{ a.doctor.user.name }}</td>
+          <td>{{ a.start_time.strftime('%d %b %Y, %I:%M %p') }}</td>
+          <td><span class="status-badge status-{{ a.status|lower }}">{{ a.status }}</span></td>
+          <td>{% if a.status in ['Pending','Confirmed'] %}
+            <form method="POST" action="{{ url_for('admin.update_appointment', appointment_id=a.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <select name="status">
+                <option value="Pending">Pending</option><option value="Confirmed">Confirmed</option><option value="Cancelled">Cancelled</option>
+              </select>
+              <button class="btn btn-small btn-primary">Save</button>
+            </form>
+          {% else %}—{% endif %}</td>
+        </tr>
+      {% else %}<tr><td colspan="5">No appointments yet.</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </section>
+</section>
+{% endblock %}

@@ -1,0 +1,196 @@
+```html
+{% extends "base.html" %}
+
+{% block title %}Book Appointment | Hospital Management System{% endblock %}
+
+{% block content %}
+<section class="booking-page">
+    <div class="booking-container">
+
+        <!-- Page Heading -->
+        <div class="booking-header">
+            <a href="{{ url_for('index') }}" class="back-link">
+                &larr; Back to Home
+            </a>
+
+            <h1>Book an Appointment</h1>
+            <p>Choose a convenient date and available time to schedule your consultation.</p>
+        </div>
+
+        <!-- Booking Layout -->
+        <div class="booking-layout">
+
+            <!-- Doctor Information -->
+            <aside class="doctor-summary">
+                <div class="doctor-avatar">
+                    <span>
+                        {{ doctor.user.name[0]|upper if doctor.user and doctor.user.name else 'D' }}
+                    </span>
+                </div>
+
+                <h2>{{ doctor.user.name if doctor.user else 'Doctor' }}</h2>
+
+                <p class="doctor-specialization">
+                    {{ doctor.specialization or 'Medical Specialist' }}
+                </p>
+
+                {% if doctor.department %}
+                <p class="doctor-department">
+                    <strong>Department:</strong>
+                    {{ doctor.department.name }}
+                </p>
+                {% endif %}
+
+                {% if doctor.qualification %}
+                <p>
+                    <strong>Qualification:</strong><br>
+                    {{ doctor.qualification }}
+                </p>
+                {% endif %}
+
+                {% if doctor.experience is not none %}
+                <p>
+                    <strong>Experience:</strong><br>
+                    {{ doctor.experience }} years
+                </p>
+                {% endif %}
+
+                <div class="consultation-fee">
+                    <span>Consultation Fee</span>
+                    <strong>
+                        ₹{{ "%.2f"|format(doctor.consultation_fee or 0) }}
+                    </strong>
+                </div>
+
+                <div class="booking-note">
+                    <strong>Note:</strong>
+                    Available time slots depend on the doctor's saved schedule.
+                </div>
+            </aside>
+
+            <!-- Appointment Form -->
+            <div class="booking-panel">
+                <h2>Appointment Details</h2>
+                <p class="form-description">
+                    Complete the details below to book your consultation.
+                </p>
+
+                <form
+                    id="appointment-form"
+                    action="{{ url_for('appointment.book') }}"
+                    method="POST"
+                >
+                    <!-- CSRF Protection -->
+                    <input
+                        type="hidden"
+                        name="csrf_token"
+                        value="{{ csrf_token() }}"
+                    >
+
+                    <!-- Selected Doctor -->
+                    <input
+                        type="hidden"
+                        name="doctor_id"
+                        value="{{ doctor.id }}"
+                    >
+
+                    <!-- Appointment Date -->
+                    <div class="form-group">
+                        <label for="appointment-date">
+                            Select Appointment Date
+                            <span class="required">*</span>
+                        </label>
+
+                        <input
+                            type="date"
+                            id="appointment-date"
+                            name="appointment_date"
+                            required
+                        >
+
+                        <small>
+                            Choose a future date to see available slots.
+                        </small>
+                    </div>
+
+                    <!-- Available Time Slots -->
+                    <div class="form-group">
+                        <label>
+                            Available Time Slots
+                            <span class="required">*</span>
+                        </label>
+
+                        <div
+                            id="time-slots"
+                            class="time-slots"
+                            aria-live="polite"
+                        >
+                            <p class="slot-placeholder">
+                                Please select a date to view available slots.
+                            </p>
+                        </div>
+
+                        <!-- The JavaScript stores the selected date and time here -->
+                        <input
+                            type="hidden"
+                            id="start_time"
+                            name="start_time"
+                            value=""
+                            required
+                        >
+
+                        <small>
+                            Click a time slot to select your appointment time.
+                        </small>
+                    </div>
+
+                    <!-- Reason for Appointment -->
+                    <div class="form-group">
+                        <label for="reason">
+                            Reason for Visit
+                            <span class="optional">(Optional)</span>
+                        </label>
+
+                        <textarea
+                            id="reason"
+                            name="reason"
+                            rows="4"
+                            maxlength="1000"
+                            placeholder="Briefly describe your reason for consultation..."
+                        ></textarea>
+                    </div>
+
+                    <!-- Success/Error Messages -->
+                    <div
+                        id="booking-message"
+                        class="booking-message"
+                        role="status"
+                        aria-live="polite"
+                        hidden
+                    ></div>
+
+                    <!-- Submit -->
+                    <button
+                        type="submit"
+                        id="book-appointment-button"
+                        class="btn btn-primary booking-submit"
+                    >
+                        Confirm Appointment
+                    </button>
+
+                    <p class="secure-note">
+                        Your appointment will be submitted for confirmation.
+                    </p>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Appointment Booking JavaScript -->
+<script
+    src="{{ url_for('static', filename='appointments.js') }}"
+    defer
+></script>
+{% endblock %}
+```

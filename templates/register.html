@@ -1,0 +1,26 @@
+
+{% extends "base.html" %}
+{% block title %}Register | QuickCare{% endblock %}
+{% block content %}
+<section class="auth-layout">
+  <div class="auth-intro">
+    <span class="eyebrow">GET STARTED</span>
+    <h1>Take charge of your healthcare.</h1>
+    <p>Create your patient account to start booking appointments.</p>
+  </div>
+  <div class="card auth-card">
+    <h2>Create account</h2>
+    <form method="POST" class="form-stack">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label>Full name</label>
+      <input name="name" maxlength="100" required>
+      <label>Email address</label>
+      <input type="email" name="email" maxlength="150" required>
+      <label>Password (minimum 8 characters)</label>
+      <input type="password" name="password" minlength="8" required>
+      <button class="btn btn-primary">Register</button>
+    </form>
+    <p>Already registered? <a href="{{ url_for('auth.login') }}">Login</a></p>
+  </div>
+</section>
+{% endblock %}

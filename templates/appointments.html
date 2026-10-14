@@ -1,0 +1,10 @@
+
+{% extends "base.html" %}
+{% block title %}Appointments | QuickCare{% endblock %}
+{% block content %}
+<section class="section">
+  <h1>Appointment Management</h1>
+  <p>Manage appointments from your role-specific dashboard.</p>
+  <a href="{{ url_for('auth.dashboard') }}" class="btn btn-primary">Open Dashboard</a>
+</section>
+{% endblock %}

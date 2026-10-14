@@ -1,0 +1,78 @@
+
+{% extends "base.html" %}
+{% block title %}Doctor Dashboard | QuickCare{% endblock %}
+{% block content %}
+<section class="section">
+  <span class="eyebrow">DOCTOR PORTAL</span>
+  <h1>Welcome, {{ current_user.name }}</h1>
+  <p class="muted">{{ doctor.specialization }} · {{ doctor.department.name if doctor.department else 'General' }}</p>
+
+  <section class="card section-card">
+    <h2>Manage availability</h2>
+    <form method="POST" action="{{ url_for('doctor.save_schedule') }}" class="form-stack">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label>Working days</label>
+      <div class="day-selector">
+        {% for day in [('Monday',0),('Tuesday',1),('Wednesday',2),('Thursday',3),('Friday',4),('Saturday',5),('Sunday',6)] %}
+          <label class="day-option"><input type="checkbox" name="weekday" value="{{ day[1] }}" {% if schedules|selectattr('weekday','equalto',day[1])|list %}checked{% endif %}> {{ day[0][:3] }}</label>
+        {% endfor %}
+      </div>
+      <div class="form-grid">
+        <div><label>Start time</label><input name="start_time" type="time" value="{{ schedules[0].start_time.strftime('%H:%M') if schedules else '09:00' }}" required></div>
+        <div><label>End time</label><input name="end_time" type="time" value="{{ schedules[0].end_time.strftime('%H:%M') if schedules else '17:00' }}" required></div>
+      </div>
+      <button class="btn btn-primary">Save Schedule</button>
+    </form>
+  </section>
+
+  <section class="card section-card">
+    <h2>Assigned appointments</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Patient</th><th>Date</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>{% for a in appointments %}
+        <tr>
+          <td>{{ a.patient.user.name }}<br><small>{{ a.patient.user.email }}</small></td>
+          <td>{{ a.start_time.strftime('%d %b %Y, %I:%M %p') }}</td>
+          <td>{{ a.reason or 'General consultation' }}</td>
+          <td><span class="status-badge status-{{ a.status|lower }}">{{ a.status }}</span></td>
+          <td>
+            {% if a.status in ['Pending','Confirmed'] %}
+              <div class="action-stack">
+                {% if a.status == 'Pending' %}
+                  <form method="POST" action="{{ url_for('doctor.update_status', appointment_id=a.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="status" value="Confirmed">
+                    <button class="btn btn-small btn-primary">Confirm</button>
+                  </form>
+                {% endif %}
+                {% if a.end_time <= now %}
+                  <form method="POST" action="{{ url_for('doctor.update_status', appointment_id=a.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="status" value="Completed">
+                    <button class="btn btn-small btn-success">Complete</button>
+                  </form>
+                {% endif %}
+                <form method="POST" action="{{ url_for('doctor.update_status', appointment_id=a.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" name="status" value="Cancelled">
+                  <button class="btn btn-small btn-danger">Cancel</button>
+                </form>
+              </div>
+            {% endif %}
+
+            {% if a.status == 'Completed' %}
+              <details><summary>Consultation notes</summary>
+                <form method="POST" class="form-stack" action="{{ url_for('doctor.save_notes', appointment_id=a.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <textarea name="notes" rows="3" maxlength="5000" required>{% if a.notes %}{{ a.notes[0].notes }}{% endif %}</textarea>
+                  <button class="btn btn-small btn-primary">Save Notes</button>
+                </form>
+              </details>
+            {% endif %}
+          </td>
+        </tr>
+      {% else %}<tr><td colspan="5">No appointments assigned yet.</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </section>
+</section>
+{% endblock %}

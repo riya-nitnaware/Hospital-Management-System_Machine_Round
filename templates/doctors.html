@@ -1,0 +1,39 @@
+
+{% extends "base.html" %}
+{% block title %}Find Doctors | QuickCare{% endblock %}
+{% block content %}
+<section class="section">
+  <h1>Find a Doctor</h1>
+  <form method="GET" class="search-bar">
+    <input name="q" value="{{ query }}" placeholder="Doctor name or specialization">
+    <select name="department">
+      <option value="">All departments</option>
+      {% for department in departments %}
+        <option value="{{ department.id }}" {% if department_id == department.id %}selected{% endif %}>
+          {{ department.name }}
+        </option>
+      {% endfor %}
+    </select>
+    <button class="btn btn-primary">Search</button>
+  </form>
+
+  <div class="doctor-grid">
+    {% for doctor in doctors %}
+      <article class="card doctor-card">
+        <div class="avatar">{{ doctor.user.name[0]|upper }}</div>
+        <h3>{{ doctor.user.name }}</h3>
+        <p>{{ doctor.specialization }}</p>
+        <p class="muted">{{ doctor.department.name if doctor.department else 'General' }}</p>
+        <p>Fee: <strong>₹{{ "%.2f"|format(doctor.consultation_fee) }}</strong></p>
+        {% if current_user.is_authenticated and current_user.role == 'patient' %}
+          <a class="btn btn-primary" href="{{ url_for('appointment.booking_page', doctor_id=doctor.id) }}">Choose a time</a>
+        {% elif not current_user.is_authenticated %}
+          <a class="btn btn-primary" href="{{ url_for('auth.login') }}">Login to book</a>
+        {% endif %}
+      </article>
+    {% else %}
+      <p>No matching doctors found.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
